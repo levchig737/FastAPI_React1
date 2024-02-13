@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi_users import FastAPIUsers
 from sqlalchemy.orm import Session
 
@@ -25,25 +25,37 @@ fastapi_users = FastAPIUsers[User, int](
 
 
 @router.post('/', tags=["brand"])
-async def create(data: BrandDTO.Brand = None, db: Session = Depends(get_db)):
+async def create(data: BrandDTO.Brand = None, db: Session = Depends(get_db),
+                 cur_user: User = Depends(fastapi_users.current_user())):
+    if cur_user.role != "admin" and cur_user.role != "manager":
+        raise HTTPException(status_code=403, detail="You do not have permission to access this resource")
     return BrandService.create_brand(data, db)
 
 
 @router.get('/{id}', tags=["brand"])
 async def get_brand_by_id(id: int = None, db: Session = Depends(get_db)):
-    return BrandService.get_brand_by_id(id, db)
+    brand = BrandService.get_brand_by_id(id, db)
+    if not brand:
+        raise HTTPException(status_code=400, detail=f"Brand with id {id} not exists")
+    return brand
 
 
 @router.get('/', tags=["brand"])
-async def get_products(db: Session = Depends(get_db)):
+async def get_brands(db: Session = Depends(get_db)):
     return BrandService.get_brands(db)
 
 
 @router.put('/{id}', tags=["brand"])
-async def update(id: int = None, data: BrandDTO.Brand = None, db: Session = Depends(get_db)):
+async def update(id: int = None, data: BrandDTO.Brand = None, db: Session = Depends(get_db),
+                 cur_user: User = Depends(fastapi_users.current_user())):
+    if cur_user.role != "admin" and cur_user.role != "manager":
+        raise HTTPException(status_code=403, detail="You do not have permission to access this resource")
     return BrandService.update(id, data, db)
 
 
 @router.delete('/{id}', tags=["brand"])
-async def delete(id: int = None, db: Session = Depends(get_db)):
+async def delete(id: int = None, db: Session = Depends(get_db),
+                 cur_user: User = Depends(fastapi_users.current_user())):
+    if cur_user.role != "admin":
+        raise HTTPException(status_code=403, detail="You do not have permission to access this resource")
     return BrandService.remove(id, db)

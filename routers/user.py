@@ -27,7 +27,7 @@ fastapi_users = FastAPIUsers[User, int](
 
 @router.get('/{id}', tags=["user"])
 async def get_user(id: int, cur_user: User = Depends(fastapi_users.current_user()), db: Session = Depends(get_db)):
-    if cur_user.role != "manager":
+    if cur_user.role != "admin":
         raise HTTPException(status_code=403, detail="You do not have permission to access this resource")
 
     user_db = UserService.get_user_by_id(id, db)
@@ -38,7 +38,7 @@ async def get_user(id: int, cur_user: User = Depends(fastapi_users.current_user(
 
 @router.put('/{id}', tags=["user"])
 async def update_user(id: int, data: UserUpdate, db: Session = Depends(get_db), cur_user: User = Depends(fastapi_users.current_user())):
-    if cur_user.role != "manager":
+    if cur_user.role != "admin":
         raise HTTPException(status_code=403, detail="You do not have permission to access this resource")
 
     user = UserService.update_user(id, data, db)
@@ -49,7 +49,7 @@ async def update_user(id: int, data: UserUpdate, db: Session = Depends(get_db), 
 
 @router.delete('/{id}', tags=["user"])
 async def delete_user(id: int, db: Session = Depends(get_db), cur_user: User = Depends(fastapi_users.current_user())):
-    if cur_user.role != "manager":
+    if cur_user.role != "admin":
         raise HTTPException(status_code=403, detail="You do not have permission to access this resource")
 
     user = UserService.delete_user(id, db)

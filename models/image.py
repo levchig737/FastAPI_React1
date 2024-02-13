@@ -12,7 +12,7 @@ class Image(Base):
     __tablename__ = "images"
 
     id = Column(Integer, primary_key=True, index=True, nullable=False)
-    name: String = Column(String, nullable=False)
+    name: String = Column(String, unique=True, nullable=False)
 
-    product_id = Column(Integer, ForeignKey('products.id'))
+    product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
     product = relationship("Product", back_populates="images")

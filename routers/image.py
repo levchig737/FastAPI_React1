@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi_users import FastAPIUsers
 from sqlalchemy.orm import Session
 
@@ -25,13 +25,19 @@ fastapi_users = FastAPIUsers[User, int](
 
 
 @router.post('/', tags=["image"])
-async def create(data: ImageDTO.Image = None, db: Session = Depends(get_db)):
+async def create(data: ImageDTO.Image = None, db: Session = Depends(get_db),
+                 cur_user: User = Depends(fastapi_users.current_user())):
+    if cur_user.role != "admin" and cur_user.role != "manager":
+        raise HTTPException(status_code=403, detail="You do not have permission to access this resource")
     return ImageService.create_image(data, db)
 
 
 @router.get('/{id}', tags=["image"])
 async def get_image_by_id(id: int = None, db: Session = Depends(get_db)):
-    return ImageService.get_image_by_id(id, db)
+    image = ImageService.get_image_by_id(id, db)
+    if not image:
+        raise HTTPException(status_code=400, detail=f"Image with id {id} not exists")
+    return image
 
 
 @router.get('/', tags=["image"])
@@ -40,10 +46,16 @@ async def get_images(db: Session = Depends(get_db)):
 
 
 @router.put('/{id}', tags=["image"])
-async def update(id: int = None, data: ImageDTO.Image = None, db: Session = Depends(get_db)):
+async def update(id: int = None, data: ImageDTO.Image = None, db: Session = Depends(get_db),
+                 cur_user: User = Depends(fastapi_users.current_user())):
+    if cur_user.role != "admin" and cur_user.role != "manager":
+        raise HTTPException(status_code=403, detail="You do not have permission to access this resource")
     return ImageService.update(id, data, db)
 
 
 @router.delete('/{id}', tags=["image"])
-async def delete(id: int = None, db: Session = Depends(get_db)):
+async def delete(id: int = None, db: Session = Depends(get_db),
+                 cur_user: User = Depends(fastapi_users.current_user())):
+    if cur_user.role != "admin":
+        raise HTTPException(status_code=403, detail="You do not have permission to access this resource")
     return ImageService.remove(id, db)

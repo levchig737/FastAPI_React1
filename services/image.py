@@ -1,8 +1,38 @@
+import os
 from typing import Type
 
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from dto import image as ImageDTO
 from models.image import Image
+from services.product import get_product
+
+
+def validate_image(image: Image, db) -> bool:
+    # Проверяем существование категории
+    product = get_product(image.product_id, db)
+    if not product:
+        raise HTTPException(status_code=404, detail=f"Product with id {image.product_id} does not exist")
+
+    # Проверка типа файла
+    allowed_extensions = {".jpg", ".jpeg", ".png"}  # Разрешенные расширения файлов
+    _, file_extension = os.path.splitext(str(image.name))  # Получаем расширение файла из имени
+
+    if file_extension.lower() not in allowed_extensions:
+        raise HTTPException(status_code=400, detail=f"Not allowed type of file")
+
+    # Проверка уникальности имени файла
+    existing_image = db.query(Image).filter(Image.name == image.name).first()
+    if existing_image:
+        raise HTTPException(status_code=400, detail=f"File already exists")
+
+    # Проверка существования файла
+    # Получаем абсолютный путь к файлу относительно текущей директории проекта
+    base_dir = os.path.dirname(os.path.abspath(__file__))  # Путь к текущему файлу
+    file_path = os.path.join(base_dir, "..", "data", "images", str(image.name))  # Путь к изображению
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=400, detail=f"File not exists")
+    return True
 
 
 def create_image(data: Image, db: Session) -> Image:
@@ -12,6 +42,8 @@ def create_image(data: Image, db: Session) -> Image:
     :param db: бд сессии
     :return: Созданное изображение
     """
+
+    validate_image(data, db)
 
     image = Image(**data.dict())
 
@@ -87,4 +119,3 @@ def remove(id: int, db: Session) -> int | None:
         db.commit()
 
     return image
-

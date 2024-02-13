@@ -10,21 +10,19 @@ class Base(DeclarativeBase):
 
 # Перечисление для типа роли
 class UserRole(str, BaseEnum):
-    manager = "manager"
-    team_lead = "team_lead"
-    developer = "developer"
-    test_engineer = "test_engineer"
+    admin = "admin"  # Все права
+    manager = "manager"  # CRUD для: продукты, категории, изображения, бренды
+    user = "user"  # Получить данные (get) для продуктов, категорий, изображений, брендов, купить продукт
 
 
 class User(SQLAlchemyBaseUserTable[int], Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, unique=True, index=True, nullable=False)
     role: UserRole = Column(String, nullable=False)
     email: str = Column(String(length=320), unique=True, index=True, nullable=False)
     hashed_password: str = Column(String(length=1024), nullable=False)
     is_active: bool = Column(Boolean, default=True, nullable=False)
     is_superuser: bool = Column(Boolean, default=False, nullable=False)
     is_verified: bool = Column(Boolean, default=False, nullable=False)
-
