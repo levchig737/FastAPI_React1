@@ -2,6 +2,8 @@ import uvicorn
 from fastapi import FastAPI, Depends
 from fastapi_users import FastAPIUsers
 
+from fastapi.middleware.cors import CORSMiddleware
+
 from backend.auth.auth import auth_backend
 from backend.auth.database import engine as UserEngine
 from backend.auth.manager import get_user_manager
@@ -16,7 +18,22 @@ from backend.routers import brand as BrandRouter, image as ImageRouter, user as 
     category as CategoryRouter
 
 Base.metadata.create_all(bind=Engine)
+
+
 app = FastAPI()
+
+origins = [
+    "http://localhost:8000",
+    "http://localhost:3000"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.on_event("startup")
@@ -62,4 +79,9 @@ app.include_router(ImageRouter.router, prefix='/image')
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host='localhost', port=8000, reload=True, workers=3)
+    uvicorn.run("main:app",
+                host='0.0.0.0',
+                port=8000,
+                reload=True,
+                workers=3,
+                )

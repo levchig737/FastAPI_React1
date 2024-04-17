@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi_users import FastAPIUsers
 from sqlalchemy.orm import Session
 
@@ -57,3 +57,13 @@ async def delete(id: int = None, db: Session = Depends(get_db),
     if cur_user.role != "admin":
         raise HTTPException(status_code=403, detail="You do not have permission to access this resource")
     return ImageService.remove(id, db)
+
+
+@router.post('/upload/', tags=["image"])
+async def upload_image(file: UploadFile = File(...),
+                 cur_user: User = Depends(fastapi_users.current_user())):
+    if cur_user.role != "admin" and cur_user.role != "manager":
+        raise HTTPException(status_code=403, detail="You do not have permission to access this resource")
+
+    ImageService.upload_image(file)
+    return file.filename

@@ -1,5 +1,6 @@
 from typing import Type
 
+from sqlalchemy import desc, asc
 from sqlalchemy.orm import Session
 from backend.dto import category as CategoryDTO
 from backend.models.category import Category
@@ -87,4 +88,3 @@ def remove(id: int, db: Session) -> int | None:
         db.commit()
 
     return category
-

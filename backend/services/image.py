@@ -1,7 +1,7 @@
 import os
 from typing import Type
 
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from backend.dto import image as ImageDTO
 from backend.models.image import Image
@@ -9,7 +9,7 @@ from backend.services.product import get_product
 
 
 def validate_image(image: Image, db) -> bool:
-    # Проверяем существование категории
+    # Проверяем существование продукта
     product = get_product(image.product_id, db)
     if not product:
         raise HTTPException(status_code=404, detail=f"Product with id {image.product_id} does not exist")
@@ -29,7 +29,7 @@ def validate_image(image: Image, db) -> bool:
     # Проверка существования файла
     # Получаем абсолютный путь к файлу относительно текущей директории проекта
     base_dir = os.path.dirname(os.path.abspath(__file__))  # Путь к текущему файлу
-    file_path = os.path.join(base_dir, "../..", "react", "my-app", "public", "img", str(image.name))  # Путь к изображению
+    file_path = os.path.join(base_dir, "../..", "react", "React-shop", "public", "img", str(image.name))  # Путь к изображению
     if not os.path.exists(file_path):
         raise HTTPException(status_code=400, detail=f"File not exists")
     return True
@@ -119,3 +119,29 @@ def remove(id: int, db: Session) -> int | None:
         db.commit()
 
     return image
+
+
+def upload_image(file: UploadFile = File(...)) -> None:
+    # Получаем абсолютный путь к файлу относительно текущей директории проекта
+    base_dir = os.path.dirname(os.path.abspath(__file__))  # Путь к текущему файлу
+    file_path = os.path.join(base_dir, "../..", "react", "React-shop", "public", "img",
+                             str(file.filename))  # Путь к изображению
+
+    # Проверки
+    if not os.path.exists(os.path.join(base_dir, "../..", "react", "React-shop", "public", "img")):
+        raise HTTPException(status_code=400, detail=f"Path not exists")
+
+        # Проверка типа файла
+    allowed_extensions = {".jpg", ".jpeg", ".png"}  # Разрешенные расширения файлов
+    _, file_extension = os.path.splitext(str(file.filename))  # Получаем расширение файла из
+    if file_extension.lower() not in allowed_extensions:
+        raise HTTPException(status_code=400, detail=f"Not allowed type of file")
+
+    # Проверка уникальности имени файла
+    if os.path.exists(file_path):
+        raise HTTPException(status_code=400, detail=f"File already exists")
+
+    # Сохраняем файл в папку public/img с тем же именем, что у файла
+    with open(file_path, "wb") as buffer:
+        buffer.write(file.file.read())
+

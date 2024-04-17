@@ -79,18 +79,19 @@ def get_products(db: Session, skip: int = 0, limit: int = 10, search_query: Opti
     if search_query:
         query = query.filter(Product.title.ilike(f"%{search_query}%"))
 
-    total_count = query.count()  # Получаем общее количество товаров
 
     products = query.offset(skip).limit(limit).all()
+    total_count = query.count()  # Получаем общее количество товаров
+
 
     items = []
     for i in range(skip+1, limit+1):
         item = get_product(i, db)
         if item:
             items.append(item)
-        else: break
 
-    return items, total_count
+
+    return products, total_count
 
 
 def get_count_products(db: Session) -> int:
