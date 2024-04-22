@@ -66,9 +66,9 @@ app.include_router(
 current_user = fastapi_users.current_user()
 
 
-@app.get("/protected-route", tags=["auth"])
+@app.get("/me", tags=["auth"])
 def protected_route(user: User = Depends(current_user)):
-    return f"Hello, {user.name}"
+    return {user}
 
 
 app.include_router(UserRouter.router, prefix='/user')
