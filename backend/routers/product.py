@@ -1,8 +1,9 @@
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi_users import FastAPIUsers
 from sqlalchemy.orm import Session
+from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from backend.auth.auth import auth_backend
 from backend.auth.manager import get_user_manager
@@ -69,8 +70,44 @@ async def delete(id: int = None, db: Session = Depends(get_db),
     return ProductService.remove(id, db)
 
 
-@router.put('/buy/{id}', tags=["product"])
-async def buy_product(id: int = None, data: ProductDTO.ProductBuy = None, db: Session = Depends(get_db), cur_user: User = Depends(fastapi_users.current_user())):
-    if cur_user.role != "admin" and cur_user.role != "user":
-        raise HTTPException(status_code=403, detail="You do not have permission to access this resource")
-    return ProductService.buy_product(id, data, db)
+# @router.put('/buy/{id}', tags=["product"])
+# async def buy_product(id: int = None, data: ProductDTO.ProductBuy = None, db: Session = Depends(get_db), cur_user: User = Depends(fastapi_users.current_user())):
+#     if cur_user.role != "admin" and cur_user.role != "user":
+#         raise HTTPException(status_code=403, detail="You do not have permission to access this resource")
+#     return ProductService.buy_product(id, data, db)
+
+
+# Список подключенных клиентов WebSocket
+manager_websockets: List[WebSocket] = []
+
+#
+# # Роутер для подключения к WebSocket
+# @router.websocket("/ws")
+# async def websocket_endpoint(websocket: WebSocket):
+#     await websocket.accept()
+#     manager_websockets.append(websocket)
+#     try:
+#         while True:
+#             # Получаем сообщение от клиента
+#             data = await websocket.receive_text()
+#             print(f"Получено сообщение: {data}")
+#
+#             # Здесь можно добавить логику обработки сообщения, если это необходимо
+#             # Например, отправить сообщение обратно клиенту или выполнить какие-то действия на сервере
+#
+#     except WebSocketDisconnect:
+#         manager_websockets.remove(websocket)
+#
+#
+# # Ваш роутер для покупки товара
+# @router.put('/buy/{id}', tags=["product"])
+# async def buy_product(id: int = None, data: ProductDTO.ProductBuy = None, db: Session = Depends(get_db),
+#                       cur_user: User = Depends(fastapi_users.current_user())):
+#     if cur_user.role != "admin" and cur_user.role != "user":
+#         raise HTTPException(status_code=403, detail="You do not have permission to access this resource")
+#
+#     # Отправляем сообщение о покупке товара всем подключенным менеджерам
+#     for manager_websocket in manager_websockets:
+#         await manager_websocket.send_text(f"Пользователь {cur_user.name} купил товар с id {id}")
+#
+#     return ProductService.buy_product(id, data, db)
